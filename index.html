@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Server Log Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>LOG ANALYZER</h2>
+    <p>Dashboard</p>
+    <p>Traffic Analysis</p>
+    <p>IP Addresses</p>
+    <p>Server Reports</p>
+</div>
+
+<div class="main">
+    <h1>Web Server Log Analyzer</h1>
+    <p>Website Traffic and Error Monitoring Dashboard</p>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="logfile" accept=".log,.txt" required>
+        <button type="submit">Analyze Logs</button>
+    </form>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if result %}
+
+    <h3>File: {{ filename }}</h3>
+
+    <div class="cards">
+        <div class="card">
+            <p>Total Requests</p>
+            <h2>{{ result.total }}</h2>
+        </div>
+
+        <div class="card">
+            <p>Successful Requests</p>
+            <h2>{{ result.success }}</h2>
+        </div>
+
+        <div class="card">
+            <p>Failed Requests</p>
+            <h2>{{ result.errors }}</h2>
+        </div>
+
+        <div class="card">
+            <p>Unique Visitors</p>
+            <h2>{{ result.ips|length }}</h2>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="panel">
+            <h2>HTTP Status Codes</h2>
+            <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="panel">
+            <h2>Visitor IP Addresses</h2>
+            <table>
+                <tr><th>IP Address</th><th>Requests</th></tr>
+                {% for ip, count in result.ips.items() %}
+                <tr><td>{{ ip }}</td><td>{{ count }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Most Visited Pages</h2>
+        <table>
+            <tr><th>Page</th><th>Visits</th></tr>
+            {% for page, count in result.pages.items() %}
+            <tr><td>{{ page }}</td><td>{{ count }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <script>
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ result.statuses.keys()|list|tojson }},
+                datasets: [{
+                    data: {{ result.statuses.values()|list|tojson }},
+                    backgroundColor: ['#2878d0', '#f0a33a', '#e05252']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+
+    {% endif %}
+</div>
+
+</body>
+</html>
